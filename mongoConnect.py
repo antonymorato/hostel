@@ -1,35 +1,51 @@
 from pymongo import MongoClient
 
+from sqlConnect import sqlConn as sql
 
-from pprint import pprint
 class mongoConnect(object):
 	"""docstring for mongoConnect"""
 	default=False
+	maxSettlers=4
 	def __init__(self, arg):
-		super(mongoConnect, self).__init__()
-		self.arg = arg
+			pass
 	@staticmethod
 	def connect(ip,port):
 		mongoConnect.conn = MongoClient("mongodb://{}:{}".format(ip,port))
 		mongoConnect.db=mongoConnect.conn.hostel
+		mongoConnect.collection=mongodb.db.rooms
+
 	@staticmethod
-	def setRoom(room,pc=default,microwave=default,
+	def updateRoom(room,pc=default,microwave=default,
 		kettle=default,fridge=default):
 		mongoConnect.collection=mongoConnect.db.rooms
-		
-		record={"number":room,"pc":pc,
-		'microwave':microwave,'fridge':fridge,'kettle':kettle}
-		mongoConnect.collection.insert_one(record)
+		query={'number':room}
+		new={'$set':{"pc":pc,
+		'microwave':microwave,
+		'fridge':fridge,'kettle':kettle}}
+	# @staticmethod
+	# def getStApplInfo(stId,room):
+	# 	mongoConnect.collection.find_one({})
 	@staticmethod
-	def getInfo(num):
-		return mongoConnect.db.rooms.find_one({'number':num})
-
-
-ip='localhost'
-port='27017'
-mongoConnect.connect(ip,port)
-mongoConnect.setRoom(403,fridge=True)
-
-res=mongoConnect.getInfo(403)
-print(type(res))
-print(res['pc'])
+	def getRoomInfo(num):
+		#returns dict
+		return mongoConnect.collection.find_one({'number':num})
+	@staticmethod
+	def addStudent(stId,room,pc=default,fridge=default,
+		microwave=default,kettle=default):
+		#mongoConnect.collection=mongoConnect.db.rooms
+		if mongoConnect.collection.find_one({'room':room,'students.stId'})!=None:
+			
+		if len(mongoConnect.collection.find_one({'room':room})['students'])<mongoConnect.maxSettlers:
+			query={'room':room,'students.id':{'$ne':stId}}
+			update={'$set':{'room':room},'$set':{'cleanRating':5},'$addToSet':{'students':{'stId':stId,'pc':pc,'fridge':fridge,
+			'microwave':microwave,'kettle':kettle}}}
+			mongoConnect.collection.update_one(query,update)
+			return True
+		else:
+			return False
+	@staticmethod
+	def setCleanRating(room,rating):
+		#options={'upsert':'false'}
+		query={'room':room}
+		update={'$set':{'cleanRating':rating}}
+		mongoConnect.collection.update_one(query,update,upsert=True)
