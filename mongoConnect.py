@@ -1,6 +1,6 @@
 from pymongo import MongoClient
 
-from sqlConnect import sqlConn as sql
+
 
 class mongoConnect(object):
 	"""docstring for mongoConnect"""
@@ -15,6 +15,7 @@ class mongoConnect(object):
 		mongoConnect.collection=mongoConnect.db.rooms
 
 	@staticmethod
+	#TODO
 	def updateRoom(room,pc=default,microwave=default,
 		kettle=default,fridge=default):
 		mongoConnect.collection=mongoConnect.db.rooms
@@ -48,22 +49,34 @@ class mongoConnect(object):
 
 	@staticmethod
 	def getRoomInfo(num):
-		#returns dict
+		#returns dict 
 		return mongoConnect.collection.find_one({'number':num})
 	@staticmethod
 	def addStudent(stId,room,pc=default,fridge=default,
 		microwave=default,kettle=default):
 		#mongoConnect.collection=mongoConnect.db.rooms
-	#	if mongoConnect.collection.find_one({'room':room,'students.stId'})!=None:
-			
-		if len(mongoConnect.collection.find_one({'room':room})['students'])<mongoConnect.maxSettlers:
-			query={'room':room,'students.id':{'$ne':stId}}
-			update={'$set':{'room':room},'$set':{'cleanRating':5},'$addToSet':{'students':{'stId':stId,'pc':pc,'fridge':fridge,
-			'microwave':microwave,'kettle':kettle}}}
-			mongoConnect.collection.update_one(query,update)
+		if mongoConnect.collection.find_one({'room':room})!=None:
+				
+			if len(mongoConnect.collection.find_one({'room':room})['students'])<mongoConnect.maxSettlers:
+				if mongoConnect.collection.find_one({'room':room,'students.stId':stId})==None :
+					query={'room':room,'students.id':{'$ne':stId}}
+					update={'$set':{'room':room},'$set':{'cleanRating':5},'$addToSet':{'students':{'stId':stId,'pc':pc,'fridge':fridge,
+					'microwave':microwave,'kettle':kettle}}}
+					mongoConnect.collection.update_one(query,update)
+					return True
+			else:
+				return False
+		if mongoConnect.collection.find_one({'room':room})==None:
+			mongoConnect.collection.insert_one({'room':room,'cleanRating':5,
+						'students':[{'stId':stId,'pc':pc,'fridge':fridge,
+						'microwave':microwave,'kettle':kettle}]})
+
+			print('inserted')
 			return True
 		else:
 			return False
+			
+
 	@staticmethod
 	def setCleanRating(room,rating):
 		#options={'upsert':'false'}
@@ -71,10 +84,15 @@ class mongoConnect(object):
 		update={'$set':{'cleanRating':rating}}
 		mongoConnect.collection.update_one(query,update,upsert=True)
 
+	@staticmethod
+	def getAllRooms():
+		cursor= mongoConnect.db.rooms.find()
+		return cursor
 
+# mongoConnect.connect('localhost','27017')
 
-mongoConnect.connect('localhost','27017')
+# #r=mongoConnect.autorize('toha','123456789')
+# #r=mongoConnect.addUser('toha','456789')
 
-#r=mongoConnect.autorize('toha','123456789')
-r=mongoConnect.addUser('toha','456789')
-print(r)
+# r=mongoConnect.addStudent(stId=22,room='404')
+# print(r)
