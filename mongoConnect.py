@@ -92,11 +92,3 @@ class mongoConnect(object):
 	def deleteStudent(stId,room):
 		mongoConnect.db.rooms.update_one({'room':room},{'$pull':{'students':{'stId':stId}}})
 
-# mongoConnect.connect('localhost','27017')
-
-# #r=mongoConnect.autorize('toha','123456789')
-# #r=mongoConnect.addUser('toha','456789')
-
-# r=mongoConnect.addStudent(stId=22,room='404')
-# print(r)
-# mongoConnect.deleteStudent(stId=1,room='404')
